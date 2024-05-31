@@ -1,60 +1,43 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-//import "hardhat/console.sol";
-
 contract Assessment {
-    address payable public owner;
     uint256 public balance;
-
-    event Deposit(uint256 amount);
-    event Withdraw(uint256 amount);
+    mapping(uint => uint) public shares;
+    mapping(uint => uint) public price;
+    mapping(uint => string) public stock;
 
     constructor(uint initBalance) payable {
-        owner = payable(msg.sender);
         balance = initBalance;
+        price[0] = 160;
+        price[1] = 300;
+        price[2] = 890;
+        stock[0] = "Amazon";
+        stock[1] = "Tesla";
+        stock[2] = "Nvidia";
     }
 
-    function getBalance() public view returns(uint256){
+    function getShares(uint stockId) public view returns (uint256) {
+        return shares[stockId];
+    }
+
+    function getBalance() public view returns (uint256) {
         return balance;
     }
 
-    function deposit(uint256 _amount) public payable {
-        uint _previousBalance = balance;
+    function buyShares(uint stockId, uint256 value) public {
+        require(stockId >= 0 && stockId <= 2, "Invalid stock ID");
+        uint256 stockPrice = price[stockId];
+        uint256 numShares = value / stockPrice;
+        uint256 cost = numShares * stockPrice;
 
-        // make sure this is the owner
-        require(msg.sender == owner, "You are not the owner of this account");
+        require(balance >= cost, "Insufficient balance");
 
-        // perform transaction
-        balance += _amount;
-
-        // assert transaction completed successfully
-        assert(balance == _previousBalance + _amount);
-
-        // emit the event
-        emit Deposit(_amount);
+        shares[stockId] += numShares;
+        balance -= cost;
     }
 
-    // custom error
-    error InsufficientBalance(uint256 balance, uint256 withdrawAmount);
-
-    function withdraw(uint256 _withdrawAmount) public {
-        require(msg.sender == owner, "You are not the owner of this account");
-        uint _previousBalance = balance;
-        if (balance < _withdrawAmount) {
-            revert InsufficientBalance({
-                balance: balance,
-                withdrawAmount: _withdrawAmount
-            });
-        }
-
-        // withdraw the given amount
-        balance -= _withdrawAmount;
-
-        // assert the balance is correct
-        assert(balance == (_previousBalance - _withdrawAmount));
-
-        // emit the event
-        emit Withdraw(_withdrawAmount);
+    function setBalance(uint value) public {
+        balance += value;
     }
 }
